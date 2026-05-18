@@ -1,0 +1,8 @@
+{
+  "name": "NB.888",
+  "description": "แอปพลิเคชันสำหรับบันทึกและจัดการข้อมูลการขายยางพารา ช่วยให้ผู้ใช้สามารถกรอกข้อมูลน้ำหนักยาง คำนวณราคา บันทึกประวัติการขาย และดูสรุปยอดขาย",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
