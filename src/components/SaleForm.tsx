@@ -79,26 +79,7 @@ export default function SaleForm({ onSave }: SaleFormProps) {
     setBaskets(prev => prev.map(b => b.id === id ? { ...b, weight: num } : b));
   };
 
-  const calculateReversePrice = () => {
-    const amount = parseFloat(totalAmount);
-    if (totalWeight > 0 && amount > 0) {
-      const price = amount / totalWeight;
-      setPricePerKg(price.toFixed(2));
-      setError(null);
-    } else {
-      setError("กรุณากรอกน้ำหนักและจำนวนเงินให้ครบถ้วน");
-    }
-  };
 
-  const calculateTotalAmount = () => {
-    const price = parseFloat(pricePerKg);
-    if (totalWeight > 0 && price > 0) {
-      setTotalAmount((totalWeight * price).toFixed(2));
-      setError(null);
-    } else {
-      setError("กรุณากรอกน้ำหนักและราคาต่อกิโลกรัมให้ครบถ้วน");
-    }
-  };
 
   const handleSave = () => {
     if (!yardName) {
@@ -211,23 +192,7 @@ export default function SaleForm({ onSave }: SaleFormProps) {
                 </div>
               </div>
 
-              {/* Utility Buttons */}
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={calculateReversePrice}
-                  className="flex-1 text-[10px] font-bold py-2 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded uppercase tracking-wider transition-colors border border-slate-200"
-                >
-                  Calc Price
-                </button>
-                <button
-                  type="button"
-                  onClick={calculateTotalAmount}
-                  className="flex-1 text-[10px] font-bold py-2 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded uppercase tracking-wider transition-colors border border-slate-200"
-                >
-                  Calc Amount
-                </button>
-              </div>
+
             </div>
 
             {/* Dynamic Weights */}

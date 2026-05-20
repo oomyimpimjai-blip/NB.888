@@ -18,7 +18,7 @@ import {
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { RubberSale } from '../types';
-import { TrendingUp, BarChart3, Database, CalendarDays } from 'lucide-react';
+import { TrendingUp, BarChart3, Database, CalendarDays, Download } from 'lucide-react';
 
 interface SummaryProps {
   sales: RubberSale[];
@@ -47,6 +47,34 @@ export default function Summary({ sales }: SummaryProps) {
         fullName: format(new Date(s.dateTime), 'd MMMM yyyy', { locale: th })
       }));
   }, [sales]);
+
+  const exportToCSV = () => {
+    if (sales.length === 0) return;
+
+    // BOM for Thai characters in Excel
+    const BOM = '\uFEFF';
+    const headers = ['วันที่', 'เวลา', 'ชื่อลานยาง', 'น้ำหนักรวม (กก.)', 'ราคาต่อกิโลกรัม (บาท)', 'จำนวนเงินรวม (บาท)'];
+    
+    const rows = sales.map(sale => [
+      format(new Date(sale.dateTime), 'yyyy-MM-dd'),
+      format(new Date(sale.dateTime), 'HH:mm'),
+      `"${sale.yardName.replace(/"/g, '""')}"`,
+      sale.totalWeight.toFixed(2),
+      sale.pricePerKg.toFixed(2),
+      sale.totalAmount.toFixed(2)
+    ]);
+
+    const csvContent = BOM + [headers, ...rows].map(e => e.join(",")).join("\n");
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `NB888_Sales_Export_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   if (sales.length === 0) {
     return (
@@ -143,7 +171,16 @@ export default function Summary({ sales }: SummaryProps) {
       <div className="data-card overflow-hidden flex flex-col">
         <div className="p-4 border-b bg-slate-50 flex items-center justify-between">
           <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">รายการบันทึกการขาย</h3>
-          <span className="text-[10px] font-mono text-slate-400">{sales.length} records</span>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={exportToCSV}
+              className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 hover:text-emerald-700 transition-colors uppercase tracking-widest"
+            >
+              <Download className="w-3 h-3" />
+              Export CSV
+            </button>
+            <span className="text-[10px] font-mono text-slate-400">{sales.length} records</span>
+          </div>
         </div>
         
         <div className="overflow-x-auto">

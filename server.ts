@@ -12,35 +12,45 @@ async function startServer() {
   // API to fetch Thai Navy Time / NIMT
   // We'll try to fetch and parse, but provide a robust fallback
   app.get("/api/time", async (req, res) => {
-    try {
-      // Trying a more stable API specifically for Southeast Asia/Bangkok
-      // Many Thai users use time.google.com or similar, but for REST we use WorldTimeAPI
-      // If WorldTimeAPI fails, we can try another one like timeapi.io or worldclockapi.com
-      const response = await axios.get("https://timeapi.io/api/Time/current/zone?timeZone=Asia/Bangkok", { 
-        timeout: 5000,
-        headers: { 'Accept': 'application/json' }
-      });
-      
-      res.json({ 
-        datetime: response.data.dateTime,
-        source: "NIMT/Navy Sync (via TimeAPI.io)"
-      });
-    } catch (error) {
-      console.error("Time sync failed, trying secondary source...");
+    const sources = [
+      { url: "https://timeapi.io/api/Time/current/zone?timeZone=Asia/Bangkok", key: "dateTime", name: "TimeAPI.io" },
+      { url: "https://worldtimeapi.org/api/timezone/Asia/Bangkok", key: "datetime", name: "WorldTimeAPI" },
+      { url: "https://worldclockapi.com/api/json/utc/now", key: "currentDateTime", name: "WorldClockAPI" } // Note: returns UTC
+    ];
+
+    for (const source of sources) {
       try {
-        const secondaryResponse = await axios.get("http://worldtimeapi.org/api/timezone/Asia/Bangkok", { timeout: 3000 });
-        res.json({ 
-          datetime: secondaryResponse.data.datetime,
-          source: "NIMT/Navy Sync (via WorldTimeAPI)"
+        const response = await axios.get(source.url, { 
+          timeout: 4000,
+          headers: { 'Accept': 'application/json', 'User-Agent': 'NB888-App' }
         });
-      } catch (secondaryError) {
-        console.error("All time sync sources failed:", secondaryError);
-        res.json({ 
-          datetime: new Date().toISOString(),
-          source: "System Time (Fallback)"
-        });
+        
+        let datetime = response.data[source.key];
+        
+        // Handle WorldClockAPI specifically as it's UTC and might need offset if we didn't use a zone endpoint
+        if (source.name === "WorldClockAPI") {
+          // Add 7 hours for Bangkok
+          const date = new Date(datetime);
+          date.setHours(date.getHours() + 7);
+          datetime = date.toISOString();
+        }
+
+        if (datetime) {
+          return res.json({ 
+            datetime: datetime,
+            source: `NIMT Sync (${source.name})`
+          });
+        }
+      } catch (err) {
+        console.error(`Time sync source ${source.name} failed:`, err instanceof Error ? err.message : err);
       }
     }
+
+    // If all fail
+    res.json({ 
+      datetime: new Date().toISOString(),
+      source: "System Time (Local Fallback)"
+    });
   });
 
   // Vite middleware for development
